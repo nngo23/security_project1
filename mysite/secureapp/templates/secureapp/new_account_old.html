@@ -1,0 +1,8 @@
+{% extends "secureapp/base.html" %} {% block content %}
+<h2>Legacy Join — Flaw 5 (MD5 Hashing)</h2>
+<form method="post">
+  {% csrf_token %} <input name="username" placeholder="Username" /><br /><br />
+  <input name="password" type="password" placeholder="Password" /><br /><br />
+  <button type="submit">Join (MD5)</button>
+</form>
+{% endblock %}

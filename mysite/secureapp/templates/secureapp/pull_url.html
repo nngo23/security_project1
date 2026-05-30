@@ -1,0 +1,11 @@
+{% extends "secureapp/base.html" %} {% block content %}
+<h2>Pull URL — Flaw 4 (SSRF)</h2>
+<form method="post">
+  {% csrf_token %}
+  <input name="url" placeholder="https://..." size="60" /><br /><br />
+  <button type="submit">Pull</button>
+</form>
+{% if body %}
+<h3>Fetched Content</h3>
+<pre>{{ body }}</pre>
+{% endif %} {% endblock %}

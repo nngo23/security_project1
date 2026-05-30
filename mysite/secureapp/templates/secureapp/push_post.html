@@ -1,0 +1,14 @@
+{% extends "secureapp/base.html" %} {% block content %}
+<h2>Push Post — Flaw 2 (Unsafe Deserialization)</h2>
+<form method="post">
+  {% csrf_token %}
+  <textarea
+    name="data"
+    rows="5"
+    cols="60"
+    placeholder="Paste base64 pickle payload"
+  ></textarea
+  ><br /><br />
+  <button type="submit">Push</button>
+</form>
+{% endblock %}
