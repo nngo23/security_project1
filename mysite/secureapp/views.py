@@ -131,7 +131,7 @@ def pull_url(req):
 
         # FLAW 4: link is passed straight to urlopen with no filtering
         try:
-            with urllib.req.urlopen(link, timeout=3) as r:
+            with urllib.request.urlopen(link, timeout=3) as r:
                 body = r.read(500).decode("utf-8", errors="replace")
         except Exception as e:
           body = f"Request error: {e}"
@@ -159,7 +159,7 @@ def pull_url(req):
 
 # FLAW 5 — A06: Vulnerable and outdated components
 # Passwords are hashed with MD5 and stored as plain hex,
-# bypassing Django's secure PBKDF2+SHA256 hasher entirely.
+# bypassing Django's secure PBKDF2+SHA256 hasher entirely
 def new_account_old(req):
     if req.method == "POST":
         nick = req.POST.get("username")
@@ -178,7 +178,7 @@ def new_account_old(req):
 
     return render(req, "secureapp/new_account_old.html")
 
-# Board (main page)
+# Board_main page
 @login_required
 def board(req):
     feed = Post.objects.filter(creator=req.user)
