@@ -21,25 +21,25 @@ def new_account(req):
         key  = req.POST.get("password")
 
         # FLAW 1: key is stored without any strength check
-        # member = User.objects.create_user(username=nick, password=key)
-        # login(req, member)
-        # return redirect("board")
-
-        # FIX 1: reject weak passwords before creating the account
-        import re
-        issues = []
-        if len(key) < 8:
-             issues.append("8 or more characters")
-        if not re.search(r'[A-Z]', key):
-             issues.append("one uppercase letter")
-        if not re.search(r'[0-9]', key):
-             issues.append("one number")
-        if issues:
-            note = "Your password needs: " + ", ".join(issues) + "."
-            return render(req, "secureapp/new_account.html", {"error": note})
         member = User.objects.create_user(username=nick, password=key)
         login(req, member)
         return redirect("board")
+
+        # FIX 1: reject weak passwords before creating the account
+        # import re
+        # issues = []
+        # if len(key) < 8:
+        #     issues.append("8 or more characters")
+        # if not re.search(r'[A-Z]', key):
+        #     issues.append("one uppercase letter")
+        # if not re.search(r'[0-9]', key):
+        #     issues.append("one number")
+        # if issues:
+        #    note = "Your password needs: " + ", ".join(issues) + "."
+        #   return render(req, "secureapp/new_account.html", {"error": note})
+        # member = User.objects.create_user(username=nick, password=key)
+        # login(req, member)
+        # return redirect("board")
 
     return render(req, "secureapp/new_account.html")
 
@@ -72,20 +72,20 @@ def push_post(req):
         chunk = req.POST.get("data", "")
 
         # FLAW 2: attacker-controlled pickle bytes execute on the server
-        # raw = base64.b64decode(chunk)
-        # item = pickle.loads(raw)
-        # Post.objects.create(creator=req.user, message=str(item))
-        # return redirect("board")
+        raw = base64.b64decode(chunk)
+        item = pickle.loads(raw)
+        Post.objects.create(creator=req.user, message=str(item))
+        return redirect("board")
 
         # FIX 2: use json.loads — parses structure, never runs code
-        import json
-        try:
-           item = json.loads(chunk)
-           body = item.get("message", "")
-        except (json.JSONDecodeError, AttributeError):
-           return HttpResponse("Data format not supported.", status=400)
-        Post.objects.create(creator=req.user, message=body)
-        return redirect("board")
+        # import json
+        # try:
+        #  item = json.loads(chunk)
+        #   body = item.get("message", "")
+        # except (json.JSONDecodeError, AttributeError):
+        #   return HttpResponse("Data format not supported.", status=400)
+        # Post.objects.create(creator=req.user, message=body)
+        # return redirect("board")
 
     return render(req, "secureapp/push_post.html")
 
@@ -94,7 +94,7 @@ def push_post(req):
 # allowing attackers to guess passwords undetected.
 
 # Uncomment when activating the Flaw 3 fix
-breach_log = logging.getLogger(__name__)
+# breach_log = logging.getLogger(__name__)
 
 def sign_in_muted(req):
     if req.method == "POST":
@@ -106,17 +106,17 @@ def sign_in_muted(req):
             return redirect("board")
 
         # FLAW 3: failure is shown to the user but written nowhere
-        # return render(req, "secureapp/sign_in.html",
-        #              {"error": "Username or password is incorrect."})
+        return render(req, "secureapp/sign_in.html",
+        {"error": "Username or password is incorrect."})
 
         # FIX 3: log the failed attempt with the username and caller IP
-        breach_log.warning(
-            "Failed attempt | user: %s | caller: %s",
-            nick,
-            req.META.get("REMOTE_ADDR", "unavailable"),
-        )
-        return render(req, "secureapp/sign_in.html",
-            {"error": "Username or password is incorrect."})
+        # breach_log.warning(
+        #    "Failed attempt | user: %s | caller: %s",
+        #    nick,
+        #    req.META.get("REMOTE_ADDR", "unavailable"),
+        #)
+        # return render(req, "secureapp/sign_in.html",
+        #    {"error": "Username or password is incorrect."})
 
     return render(req, "secureapp/sign_in.html")
 
@@ -130,30 +130,30 @@ def pull_url(req):
         link = req.POST.get("url", "")
 
         # FLAW 4: link is passed straight to urlopen with no filtering
-        # try:
-        #    with urllib.req.urlopen(link, timeout=3) as r:
-        #        body = r.read(500).decode("utf-8", errors="replace")
-        # except Exception as e:
-        #   body = f"Request error: {e}"
+        try:
+            with urllib.req.urlopen(link, timeout=3) as r:
+                body = r.read(500).decode("utf-8", errors="replace")
+        except Exception as e:
+          body = f"Request error: {e}"
 
-        # NetworkTrace.objects.create(
-        #   address=link,
-        #    excerpt=body[:200]
-        # )
+        NetworkTrace.objects.create(
+          address=link,
+           excerpt=body[:200]
+        )
 
         # FIX 4: allow only hostnames from a pre-approved set
-        from urllib.parse import urlparse
-        WHITELIST = {"example.com", "api.example.com"}
-        h = urlparse(link).hostname
-        if h not in WHITELIST:
-            body = "Refused: destination host is not permitted"
-        else:
-            try:
-                with urllib.request.urlopen(link, timeout=3) as r:
-                    body = r.read(500).decode("utf-8", errors="replace")
-            except Exception as e:
-                body = f"Request error: {e}"
-        NetworkTrace.objects.create(address=link, excerpt=body[:200])
+        # from urllib.parse import urlparse
+        # WHITELIST = {"example.com", "api.example.com"}
+        # h = urlparse(link).hostname
+        # if h not in WHITELIST:
+        #    body = "Refused: destination host is not permitted"
+        # else:
+        #    try:
+        #       with urllib.request.urlopen(link, timeout=3) as r:
+        #           body = r.read(500).decode("utf-8", errors="replace")
+        #    except Exception as e:
+        #        body = f"Request error: {e}"
+        # NetworkTrace.objects.create(address=link, excerpt=body[:200])
 
     return render(req, "secureapp/pull_url.html", {"body": body})
 
@@ -166,15 +166,15 @@ def new_account_old(req):
         key  = req.POST.get("password")
 
         # FLAW 5: unsalted MD5 is trivially cracked
-        # stale_hash = hashlib.md5(key.encode()).hexdigest()
-        # member = User(username=nick)
-        # member.password = stale_hash
-        # member.save()
-        # return redirect("sign_in")
+        stale_hash = hashlib.md5(key.encode()).hexdigest()
+        member = User(username=nick)
+        member.password = stale_hash
+        member.save()
+        return redirect("sign_in")
 
         # FIX 5: hand off to create_user for proper modern hashing
-        member = User.objects.create_user(username=nick, password=key)
-        return redirect("sign_in")
+        # member = User.objects.create_user(username=nick, password=key)
+        # return redirect("sign_in")
 
     return render(req, "secureapp/new_account_old.html")
 
